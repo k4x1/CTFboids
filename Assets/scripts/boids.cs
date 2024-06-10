@@ -14,6 +14,8 @@ public class boids : MonoBehaviour
     public RaycastHit2D[][] m_hitArray;
     public float m_avoidanceRange = 1;
 
+
+    public GameObject m_destinationObj;
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
 
@@ -61,7 +63,9 @@ public class boids : MonoBehaviour
             {
                 Debug.DrawRay(transform.position, rayDirection * m_avoidanceRange, Color.red);
                 float dist = Vector2.Distance(transform.position, otherPos);
-                m_avoidance = m_avoidance - Vector3.Normalize(otherPos - transform.position);
+                float inverseDist = dist > 0 ? 1.0f / dist : float.MaxValue;
+                m_avoidance = m_avoidance - (Vector3.Normalize(otherPos - transform.position) * inverseDist);
+                Debug.Log(inverseDist);
             }
             else
             {
@@ -70,7 +74,7 @@ public class boids : MonoBehaviour
             }
         }
 
-        m_destination = Vector3.Normalize(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position); 
+        m_destination = Vector3.Normalize(m_destinationObj.transform.position - transform.position); 
 
 
 
