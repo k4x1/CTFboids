@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 
+
 public class boids : MonoBehaviour
 {
     [SerializeField] float m_avoidanceStr = 2;
@@ -13,19 +14,37 @@ public class boids : MonoBehaviour
     public int m_detectionRes = 8;
     public RaycastHit2D[][] m_hitArray;
     public float m_avoidanceRange = 1;
+    public float m_speed = 10;
+    
 
+    public byte team = 0;
 
     public GameObject m_destinationObj;
+
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
+    private GameObject m_boidManagerRef;
 
-   [SerializeField] private Vector3 m_avoidance;
+    [SerializeField] private Vector3 m_avoidance;
    [SerializeField] private Vector3 m_destination;
     void Start()
     {
-     
+        m_boidManagerRef = GameObject.FindWithTag("boidManager");
+
+       
         m_collider = GetComponent<BoxCollider2D>();
         m_rb = GetComponent<Rigidbody2D>();
+
+        if (team == 0)
+        {
+            GetComponent<SpriteRenderer>().color = Color.red;
+            m_boidManagerRef.GetComponent<boidManager>().m_redTeam.Add(gameObject);
+        }
+        else
+        {
+            GetComponent<SpriteRenderer>().color = Color.blue;
+            m_boidManagerRef.GetComponent<boidManager>().m_bluTeam.Add(gameObject);
+        }
     }
     void Update()
     {
@@ -48,14 +67,15 @@ public class boids : MonoBehaviour
             bool collided = false;
             Vector3 otherPos = Vector2.zero;
             foreach(RaycastHit2D hit in m_hitArray[i]) { 
-                if(hit.collider == m_collider)
+                Collider2D collider = hit.collider;
+                if(collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid"))
                 {
                     continue;
                 }
                 else
                 {
                     collided = true;
-                    otherPos = hit.collider.transform.position;
+                    otherPos = hit.point;
                     break;
                 }
             }
@@ -63,7 +83,7 @@ public class boids : MonoBehaviour
             {
                 Debug.DrawRay(transform.position, rayDirection * m_avoidanceRange, Color.red);
                 float dist = Vector2.Distance(transform.position, otherPos);
-                float inverseDist = dist > 0 ? 1.0f / dist : float.MaxValue;
+                float inverseDist = (dist > 0 ? 1.0f / (dist) : float.MaxValue) ;
                 m_avoidance = m_avoidance - (Vector3.Normalize(otherPos - transform.position) * inverseDist);
                 Debug.Log(inverseDist);
             }
@@ -78,7 +98,7 @@ public class boids : MonoBehaviour
 
 
 
-        m_rb.velocity = Vector3.Normalize(   (m_avoidance * m_avoidanceStr) +  (m_destination * m_destinationStr)    ) * 10;
+        m_rb.velocity = (new Vector3(1,1,0)) + Vector3.Normalize(   (m_avoidance * m_avoidanceStr) +  (m_destination * m_destinationStr)    ) * m_speed;
 
         if (m_rb.velocity != Vector2.zero)
         {
