@@ -26,29 +26,39 @@ public class boidManager : MonoBehaviour
             {
                 go.GetComponent<boids>().team = 0;
                 go.GetComponent<SpriteRenderer>().color = Color.red;
-                m_redTeam.Add(gameObject);
+                m_redTeam.Add(go);
             }
             else
             {
                 go.GetComponent<boids>().team = 1;
                 go.GetComponent<SpriteRenderer>().color = Color.blue;
-                m_bluTeam.Add(gameObject);
+                m_bluTeam.Add(go);
             }
         }
     }
     private void Update()
     {
-        for(int i = 0; i< m_redTeam.Count; i++)
+        
+        for(int i = 0; i< m_redTeam.Count-1; i++)
         {
             if (m_redTeam[i].GetComponent<boids>().m_jailed)
             {
-
+              //  Destroy(m_redTeam[i]);
             }
         }
+        for (int i = 0; i < m_bluTeam.Count - 1; i++)
+        {
+            if (m_bluTeam[i].GetComponent<boids>().m_jailed)
+            {
+               
+              //  Destroy(m_bluTeam[i]);
+                
+            }
+        }
+
     }
     public Goal? GetRandomGoal(byte team)
     {
-        // Filter goals by the specified team
         List<Goal> filteredGoals = new List<Goal>();
         foreach (var goal in m_goals)
         {
@@ -58,23 +68,22 @@ public class boidManager : MonoBehaviour
             }
         }
 
-        // If no goals are found for the specified team, return null
         if (filteredGoals.Count == 0)
         {
             return null;
         }
 
-        // Calculate the total weight of the filtered goals
+ 
         float totalWeight = 0f;
         foreach (var goal in filteredGoals)
         {
             totalWeight += goal.weight;
         }
 
-        // Generate a random number within the range of the total weight
+
         float randomWeight = Random.Range(0f, totalWeight);
 
-        // Select the goal based on the random weight
+
         float cumulativeWeight = 0f;
         foreach (var goal in filteredGoals)
         {
@@ -85,7 +94,6 @@ public class boidManager : MonoBehaviour
             }
         }
 
-        // Fallback in case something goes wrong (shouldn't happen)
         return filteredGoals[filteredGoals.Count - 1];
     }
 }

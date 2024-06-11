@@ -18,6 +18,9 @@ public class boids : MonoBehaviour
 
     public bool m_jailed = false;
     public bool m_taggable = false;
+    public bool m_hasFlag = false;
+
+    public GameObject m_flagRef = null; 
 
     public byte team = 0;
 
@@ -37,16 +40,7 @@ public class boids : MonoBehaviour
         m_collider = GetComponent<BoxCollider2D>();
         m_rb = GetComponent<Rigidbody2D>();
 
-        if (team == 0)
-        {
-            GetComponent<SpriteRenderer>().color = Color.red;
-            m_boidManagerRef.m_redTeam.Add(gameObject);
-        }
-        else
-        {
-            GetComponent<SpriteRenderer>().color = Color.blue;
-            m_boidManagerRef.m_bluTeam.Add(gameObject);
-        }
+        
     }
 
     void Update()
@@ -152,6 +146,21 @@ public class boids : MonoBehaviour
             {
                 m_taggable = true;
                 m_boidManagerRef.m_taggable.Add(gameObject);
+            }
+        }
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        boids otherBoid = collision.GetComponent<boids>();
+        if (otherBoid == null)
+        {
+            return;
+        }
+        else
+        {
+            if (otherBoid.m_taggable)
+            {
+                otherBoid.m_jailed = true;
             }
         }
     }
