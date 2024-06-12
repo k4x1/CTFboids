@@ -25,7 +25,8 @@ public class jail : MonoBehaviour
         {
             return;
         }
-        if (otherBoid.team != team) { 
+        if (otherBoid.team != team) 
+        { 
             
         }
     }

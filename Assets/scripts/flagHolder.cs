@@ -50,6 +50,7 @@ public class flagHolder : MonoBehaviour
                 otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
                 otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
                 otherBoid.m_hasFlag = false;
+                otherBoid.m_destinationObj = null;
             }
         }
     }
