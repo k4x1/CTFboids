@@ -9,6 +9,7 @@ public class flagHolder : MonoBehaviour
     public byte m_team = 0;
     public const int m_maxFlags = 4;
     public GameObject m_flagObj;
+    public boidManager m_boidManager;
     //public GameObject[] m_flags = new GameObject[m_maxFlags];
     public int m_flagsTaken = 0;
     public Dictionary<int, GameObject> m_flags = new Dictionary<int, GameObject>();
@@ -25,19 +26,19 @@ public class flagHolder : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
-
         boids otherBoid = collision.GetComponent<boids>(); 
-        if (otherBoid != null)
+        if (otherBoid == null)
         {
             return;
         }
         if (otherBoid.team != m_team)
         {
-            if (!otherBoid.m_hasFlag && m_flags.Count > 0)
+            if (!otherBoid.m_hasFlag && m_flags.Count > 0 && m_flagsTaken< m_maxFlags)
             {
                 otherBoid.m_hasFlag = true;
                 otherBoid.m_flagRef = m_flags[m_flagsTaken];
                 m_flags[m_flagsTaken].GetComponent<flag>().m_boidFollow = otherBoid.transform;
+                otherBoid.m_destinationObj = m_boidManager.m_goals.Find(goal => goal.team == (m_team^ 1) && goal.name == "flag").obj; 
                 m_flagsTaken++;
             }
         }
@@ -48,6 +49,7 @@ public class flagHolder : MonoBehaviour
                 Vector2 pos = transform.position;
                 otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
                 otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+                otherBoid.m_hasFlag = false;
             }
         }
     }

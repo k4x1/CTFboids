@@ -20,6 +20,8 @@ public class boids : MonoBehaviour
     public bool m_taggable = false;
     public bool m_hasFlag = false;
 
+    //1 = blu; 0 = red;
+
     public GameObject m_flagRef = null; 
 
     public byte team = 0;
@@ -40,7 +42,12 @@ public class boids : MonoBehaviour
         m_collider = GetComponent<BoxCollider2D>();
         m_rb = GetComponent<Rigidbody2D>();
 
-        
+        Goal ownGoal;
+        ownGoal.name = "boid";
+        ownGoal.weight = 0;
+        ownGoal.obj = gameObject;
+        ownGoal.team = team;
+        m_boidManagerRef.m_goals.Add(ownGoal);
     }
 
     void Update()
@@ -74,7 +81,16 @@ public class boids : MonoBehaviour
             Vector3 otherPos = Vector2.zero;
             foreach (RaycastHit2D hit in m_hitArray[i])
             {
+              
                 Collider2D collider = hit.collider;
+                boids boidRef = collider.GetComponent<boids>();
+                if (boidRef != null)
+                {
+                    if (boidRef.m_taggable)
+                    {
+                        continue;
+                    }
+                }
                 if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid"))
                 {
                     continue;
@@ -102,7 +118,13 @@ public class boids : MonoBehaviour
 
     void CalculateDestination()
     {
-        m_destination = Vector3.Normalize(m_destinationObj.transform.position - transform.position);
+        if(m_destinationObj != null) { 
+            m_destination = Vector3.Normalize(m_destinationObj.transform.position - transform.position);
+        }
+        else
+        {
+            m_destination = Vector3.zero;
+        }
     }
 
     void UpdateVelocity()

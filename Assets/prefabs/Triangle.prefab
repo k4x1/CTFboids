@@ -180,10 +180,11 @@ MonoBehaviour:
   m_direction: {x: 0, y: 0}
   m_detectionRes: 8
   m_avoidanceRange: 1
-  m_speed: 10
+  m_speed: 100
   m_jailed: 0
   m_taggable: 0
   m_hasFlag: 0
+  m_flagRef: {fileID: 0}
   team: 0
   m_destinationObj: {fileID: 0}
   m_avoidance: {x: 0, y: 0, z: 0}
