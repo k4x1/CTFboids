@@ -38,7 +38,7 @@ public class flagHolder : MonoBehaviour
                 otherBoid.m_hasFlag = true;
                 otherBoid.m_flagRef = m_flags[m_flagsTaken];
                 m_flags[m_flagsTaken].GetComponent<flag>().m_boidFollow = otherBoid.transform;
-                otherBoid.m_destinationObj = m_boidManager.m_goals.Find(goal => goal.team == (m_team^ 1) && goal.name == "flag").obj; 
+          //      otherBoid.m_destinationObj = m_boidManager.m_goals.Find(goal => goal.team == (m_team^ 1) && goal.name == "flag").obj; 
                 m_flagsTaken++;
             }
         }

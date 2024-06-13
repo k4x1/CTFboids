@@ -33,38 +33,31 @@ public class boids : MonoBehaviour
 
     [SerializeField] private Vector3 m_avoidance;
     [SerializeField] private Vector3 m_destination;
-
-    List<Goal> filteredGoals = new List<Goal>();
+    float highestWeight = 0f;
+    public List<Goal> personalGoals = new List<Goal>();
     void Start()
     {
         InitializeComponents();
    
     }
 
-    void Update()
-    {
-        
+    private void LateUpdate()
+    {   
         if (!m_jailed)
         {
             m_hasBeenJailed = false;
             ProcessMovement();
             HandleGoalChange();
+            ProcessGoal();
         }
-    }
-
-    public void ProcessBoid()
-    {
-        if (m_jailed && !m_hasBeenJailed)
+        else if (!m_hasBeenJailed) 
         {
             m_hasBeenJailed = true;
             MoveToJail();
         }
-        /*
-        if (m_destinationObj == null)
-        {
-            AssignNewGoal();
-        }*/
     }
+
+
 
     private void InitializeComponents()
     {
@@ -142,10 +135,11 @@ public class boids : MonoBehaviour
             {
                 Collider2D collider = hit.collider;
                 boids boidRef = collider.GetComponent<boids>();
-                if (boidRef != null && boidRef.m_taggable)
+                if (boidRef != null && (boidRef.m_taggable || boidRef.team == team) )
                 {
                     continue;
                 }
+             
                 if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid"))
                 {
                     continue;
@@ -207,14 +201,7 @@ public class boids : MonoBehaviour
                 (team != 0 && Mathf.Sign(transform.position.x) == -1))
             {
                 m_taggable = false;
-                /*
-                m_boidManagerRef.m_taggable.Remove(gameObject);
 
-                int index = m_boidManagerRef.m_goals.FindIndex(r => r.obj == gameObject);
-                Goal updatedGoal = m_boidManagerRef.m_goals[index];
-                updatedGoal.weight = 0;
-                m_boidManagerRef.m_goals[index] = updatedGoal;
-                */
             }
         }
         else
@@ -223,14 +210,7 @@ public class boids : MonoBehaviour
                 (team != 0 && Mathf.Sign(transform.position.x) == 1))
             {
                 m_taggable = true;
-               /*
-                m_boidManagerRef.m_taggable.Add(gameObject);
 
-                int index = m_boidManagerRef.m_goals.FindIndex(r => r.obj == gameObject);
-                Goal updatedGoal = m_boidManagerRef.m_goals[index];
-                updatedGoal.weight = 20;
-                m_boidManagerRef.m_goals[index] = updatedGoal;
-               */
             }
         }
     }
@@ -241,18 +221,56 @@ public class boids : MonoBehaviour
         {
             if (goal.team != team)
             {
-                filteredGoals.Add(goal);
+                personalGoals.Add(goal);
             }
         }
+       
     }
     public void UpdateGoalWeight(Goal _goal , int _weight)
     {
-        int i = filteredGoals.FindIndex(r => r.obj == _goal.obj );
+        int i = personalGoals.FindIndex(r => r.obj == _goal.obj );
         Goal updatedGoal = new Goal();
-        updatedGoal = filteredGoals[i];
+        updatedGoal = personalGoals[i];
         updatedGoal.weight = _weight;
-        filteredGoals[i] = updatedGoal;
+        personalGoals[i] = updatedGoal;
     }
+    public void ProcessGoal()
+    {
+        List<(Goal goal, int weight)> goalsToUpdate = new List<(Goal goal, int weight)>();
+
+        foreach (Goal _goal in personalGoals)
+        {
+            if (_goal.name == "boid")
+            {
+                boids boidRef = _goal.obj.GetComponent<boids>();
+             
+                if (boidRef.m_jailed)
+                {
+                    goalsToUpdate.Add((_goal, 0));
+                }
+                else if(boidRef.m_taggable)
+                {
+                    goalsToUpdate.Add((_goal, 300));
+                }
+                
+            }
+        }
+
+        // Apply the updates after the iteration
+        foreach (var (goal, weight) in goalsToUpdate)
+        {
+            UpdateGoalWeight(goal, weight);
+        }
+
+        var randomGoal = GetRandomGoal(1, m_destinationObj);
+        if (randomGoal.HasValue)
+        {
+            m_destinationObj = randomGoal.Value.obj;
+        }
+        
+    }
+
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         
@@ -276,6 +294,53 @@ public class boids : MonoBehaviour
             return;
         }
     }
+    public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
+    {
+      
+        List<Goal> highestGoals = new List<Goal>();
+        Vector3 currentPosition = transform.position;
 
+        foreach (var goal in personalGoals)
+        {
+            if(goal.weight <= 0)
+            {
+                continue;
+            }
+            float distance = Vector3.Distance(currentPosition, goal.obj.transform.position);
+
+        
+            float adjustedWeight = goal.weight - (distance * 0.1f); // Adjust the factor as needed
+            if (goal.weight != 0 && adjustedWeight == 0)
+            {
+                adjustedWeight = 0.01f; // Set to a small positive value
+            }
+            if (highestWeight < adjustedWeight)
+            {
+                highestGoals = new List<Goal> { goal };
+                highestWeight = adjustedWeight;
+            }
+            else if (highestWeight == adjustedWeight)
+            {
+                highestGoals.Add(goal);
+            }
+        }
+
+        if (highestGoals.Count == 0)
+        {
+            return null;
+        }
+
+        int randomIndex = Random.Range(0, highestGoals.Count);
+
+        Goal currentGoal = personalGoals.Find(r => r.obj == _currentGoal);
+        if (currentGoal.obj != null && currentGoal.weight >= highestGoals[randomIndex].weight)
+        {
+            return currentGoal;
+        }
+        else
+        {
+            return highestGoals[randomIndex];
+        }
+    }
 
 }
