@@ -42,7 +42,7 @@ public class flagHolder : MonoBehaviour
                 m_flagsTaken++;
             }
         }
-        else
+        /*else
         {
             if (otherBoid.m_hasFlag)
             {
@@ -52,7 +52,7 @@ public class flagHolder : MonoBehaviour
                 otherBoid.m_hasFlag = false;
                 otherBoid.m_destinationObj = null;
             }
-        }
+        }*/
     }
     private void Update()
     {

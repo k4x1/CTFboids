@@ -243,11 +243,11 @@ public class boids : MonoBehaviour
             if (_goal.name == "boid")
             {
                 boids boidRef = _goal.obj.GetComponent<boids>();
-             
-                if (boidRef.m_jailed)
+
+                if (boidRef.m_jailed || m_taggable)
                 {
 
-                    Debug.Log("null");
+                  
                     goalsToUpdate.Add((_goal, 0));
                     m_destinationObj = null;
                 }
@@ -294,32 +294,7 @@ public class boids : MonoBehaviour
     }
 
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        
-        boids otherBoid = collision.GetComponent<boids>();
-        if (otherBoid == null)
-        {
-            return;
-        }
-        else
-        {
-            if (otherBoid.m_taggable && otherBoid.team != team)
-            {
-                otherBoid.m_jailed = true;
-                otherBoid.m_taggable = false;
-                m_destinationObj = null;
-            }
-        }
-        if (collision.gameObject == m_destinationObj)
-        {
-            Goal currentGoal = personalGoals.Find(r => r.obj == m_destinationObj);
-            UpdateGoalWeight(currentGoal, 0);
-            m_destinationObj = null;
-        
-            return;
-        }
-    }
+   
     public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
     {
         float highestWeight = 0f;
@@ -343,7 +318,7 @@ public class boids : MonoBehaviour
             if (goal.weight != 0 && adjustedWeight == 0)
             {
                 adjustedWeight = 0.01f;
-                Debug.Log(goal.name);
+                
             }
             if (highestWeight < adjustedWeight)
             {
@@ -375,5 +350,67 @@ public class boids : MonoBehaviour
             return highestGoals[randomIndex];
         }
     }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
 
+        boids otherBoid = collision.GetComponent<boids>();
+        if (otherBoid == null)
+        {
+            if (m_boidManagerRef.m_goals.Find(r => r.obj == collision.gameObject && r.name == "flag" && r.team == team).obj == m_destinationObj)
+            {
+              
+                if (m_hasFlag)
+                {
+                    Vector2 pos = m_destinationObj.transform.position;
+                    m_flagRef.GetComponent<flag>().m_boidFollow = null;
+                    m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+                    m_hasFlag = false;
+                    m_destinationObj = null;
+                }
+            }
+            else if (m_boidManagerRef.m_goals.Find(r => r.name == "jail" && r.team != team).obj == collision.gameObject && !m_jailed)
+            {
+                Debug.Log("jail touched");
+                foreach (GameObject boids in m_boidManagerRef.m_boids)
+                {
+                    boids boidRef = boids.GetComponent<boids>();
+                    if(boidRef.team == team )
+                    {
+                        if (boidRef.m_jailed)
+                        {
+                            boidRef.m_jailed = false;
+                        }
+                    }
+                }
+            }
+
+        }
+        else
+        {
+            if (otherBoid.m_taggable && otherBoid.team != team)
+            {
+                otherBoid.m_jailed = true;
+                otherBoid.m_taggable = false;
+
+                m_destinationObj = null;
+                if (otherBoid.m_hasFlag)
+                {
+                    Vector2 pos = transform.position;
+                    otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
+                    otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+                    otherBoid.m_hasFlag = false;
+                    m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj.GetComponent<flagHolder>().m_flagsTaken++;
+                    otherBoid.m_destinationObj = null;
+                }
+            }
+        }
+        if (collision.gameObject == m_destinationObj)
+        {
+            Goal currentGoal = personalGoals.Find(r => r.obj == m_destinationObj);
+            UpdateGoalWeight(currentGoal, 0);
+            m_destinationObj = null;
+
+            return;
+        }
+    }
 }

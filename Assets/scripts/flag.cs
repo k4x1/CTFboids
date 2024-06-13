@@ -18,9 +18,6 @@ public class flag : MonoBehaviour
         {
             transform.position = m_boidFollow.position;
         }
-        else
-        {
-            transform.position = m_position;
-        }
+        
     }
 }
