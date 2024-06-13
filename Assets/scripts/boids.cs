@@ -33,7 +33,7 @@ public class boids : MonoBehaviour
 
     [SerializeField] private Vector3 m_avoidance;
     [SerializeField] private Vector3 m_destination;
-    float highestWeight = 0f;
+
     public List<Goal> personalGoals = new List<Goal>();
     void Start()
     {
@@ -135,7 +135,7 @@ public class boids : MonoBehaviour
             {
                 Collider2D collider = hit.collider;
                 boids boidRef = collider.GetComponent<boids>();
-                if (boidRef != null && (boidRef.m_taggable || boidRef.team == team) )
+                if (boidRef != null && (boidRef.m_taggable) )
                 {
                     continue;
                 }
@@ -246,7 +246,10 @@ public class boids : MonoBehaviour
              
                 if (boidRef.m_jailed)
                 {
+
+                    Debug.Log("null");
                     goalsToUpdate.Add((_goal, 0));
+                    m_destinationObj = null;
                 }
                 else if(boidRef.m_taggable)
                 {
@@ -310,12 +313,16 @@ public class boids : MonoBehaviour
         }
         if (collision.gameObject == m_destinationObj)
         {
+            Goal currentGoal = personalGoals.Find(r => r.obj == m_destinationObj);
+            UpdateGoalWeight(currentGoal, 0);
             m_destinationObj = null;
+        
             return;
         }
     }
     public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
     {
+        float highestWeight = 0f;
         if (m_hasFlag)
         {
             return m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag");
@@ -332,10 +339,11 @@ public class boids : MonoBehaviour
             float distance = Vector3.Distance(currentPosition, goal.obj.transform.position);
 
         
-            float adjustedWeight = goal.weight - (distance * 0.1f); // Adjust the factor as needed
+            float adjustedWeight = goal.weight - (distance * 0.1f);
             if (goal.weight != 0 && adjustedWeight == 0)
             {
-                adjustedWeight = 0.01f; // Set to a small positive value
+                adjustedWeight = 0.01f;
+                Debug.Log(goal.name);
             }
             if (highestWeight < adjustedWeight)
             {
@@ -346,16 +354,18 @@ public class boids : MonoBehaviour
             {
                 highestGoals.Add(goal);
             }
-        }
-
-        if (highestGoals.Count == 0)
-        {
-            return null;
-        }
+       }
+       
 
         int randomIndex = Random.Range(0, highestGoals.Count);
 
+     
         Goal currentGoal = personalGoals.Find(r => r.obj == _currentGoal);
+        if (highestGoals.Count == 0)
+        {
+   
+            return currentGoal;
+        }
         if (currentGoal.obj != null && currentGoal.weight >= highestGoals[randomIndex].weight)
         {
             return currentGoal;
