@@ -237,7 +237,7 @@ public class boids : MonoBehaviour
     public void ProcessGoal()
     {
         List<(Goal goal, int weight)> goalsToUpdate = new List<(Goal goal, int weight)>();
-
+      
         foreach (Goal _goal in personalGoals)
         {
             if (_goal.name == "boid")
@@ -253,6 +253,26 @@ public class boids : MonoBehaviour
                     goalsToUpdate.Add((_goal, 300));
                 }
                 
+            }
+            if (_goal.name == "jail")
+            {
+                int newWeight = 0;
+                foreach (GameObject obj in m_boidManagerRef.m_boids)
+                {
+                    
+                    boids boidRef = obj.GetComponent<boids>();
+                    if (boidRef.team != team)
+                    {
+                        continue;
+                    }
+
+                    if (boidRef.m_jailed)
+                    {
+                        newWeight += 100;
+
+                    }
+                }
+                goalsToUpdate.Add((_goal, newWeight));
             }
         }
 
@@ -296,7 +316,10 @@ public class boids : MonoBehaviour
     }
     public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
     {
-      
+        if (m_hasFlag)
+        {
+            return m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag");
+        }
         List<Goal> highestGoals = new List<Goal>();
         Vector3 currentPosition = transform.position;
 
