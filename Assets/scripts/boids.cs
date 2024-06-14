@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine.Playables;
 public class boids : MonoBehaviour
 {
     [SerializeField] float m_avoidanceStr = 2;
     [SerializeField] float m_destinationStr = 1;
     [SerializeField] float m_maxAvoidanceStr = 10;
+
+    public bool m_playable;
+    public GameObject m_playerHighlight;
+
     public Vector2 m_direction;
     public int m_detectionRes = 8;
     public RaycastHit2D[][] m_hitArray;
@@ -40,21 +45,36 @@ public class boids : MonoBehaviour
     void Start()
     {
         InitializeComponents();
-       
-      
 
-    }
-
-    private void LateUpdate()
-    {   
-        if (!m_jailed)
+        if (m_playable)
         {
-            m_hasBeenJailed = false;
-            ProcessMovement();
-            HandleGoalChange();
-            ProcessGoal();
+            Instantiate(m_playerHighlight, transform);
+           // m_destinationObj = m_boidManagerRef.gameObject;
         }
-        else if (!m_hasBeenJailed) 
+    }
+    private void LateUpdate()
+    {
+        if (!m_jailed) { 
+            if (!m_playable) { 
+           
+            
+                m_hasBeenJailed = false;
+                ProcessMovement();
+              
+                ProcessGoal();
+            }
+            else
+            {
+                CheckTeamSpecific();
+                m_destination = Vector3.Normalize(m_boidManagerRef.transform.position - transform.position);
+
+
+                m_rb.velocity = (new Vector3(1, 1, 0)) + Vector3.Normalize((m_destination * m_destinationStr)) * m_speed * 5;
+
+            }
+        }
+        
+        else if (!m_hasBeenJailed)
         {
             m_hasBeenJailed = true;
             MoveToJail();
@@ -412,12 +432,15 @@ public class boids : MonoBehaviour
                 m_destinationObj = null;
                 if (otherBoid.m_hasFlag)
                 {
-                    Vector2 pos = transform.position;
-                    otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
-                    otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
-                    otherBoid.m_hasFlag = false;
-                    m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj.GetComponent<flagHolder>().m_flagsTaken--;
                     
+                    otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
+                    
+                    otherBoid.m_hasFlag = false;
+                    GameObject flahHolderRef = m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj;
+                    flahHolderRef.GetComponent<flagHolder>().m_flagsTaken--;
+                    Vector2 pos = flahHolderRef.transform.position;
+                    otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+
 
                     otherBoid.m_destinationObj = null;
                 }
