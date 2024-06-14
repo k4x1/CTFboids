@@ -66,6 +66,7 @@ public class boids : MonoBehaviour
             else
             {
                 CheckTeamSpecific();
+                RotateBoid();
                 m_destination = Vector3.Normalize(m_boidManagerRef.transform.position - transform.position);
 
 
@@ -159,12 +160,12 @@ public class boids : MonoBehaviour
             {
                 Collider2D collider = hit.collider;
                 boids boidRef = collider.GetComponent<boids>();
-                if (boidRef != null && (boidRef.m_taggable) )
+                if (boidRef != null && (boidRef.m_taggable || (boidRef.team == team && hit.distance > m_avoidanceRange/2)) )
                 {
                     continue;
                 }
              
-                if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid"))
+                if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid") )
                 {
                     continue;
                 }
@@ -327,6 +328,10 @@ public class boids : MonoBehaviour
         {
             m_destinationObj = randomGoal.Value.obj;
         }
+        else
+        {
+            m_destinationObj = personalGoals.Find(r => r.name == "wander").obj;
+        }
     
         
     }
@@ -394,12 +399,13 @@ public class boids : MonoBehaviour
         boids otherBoid = collision.GetComponent<boids>();
         if (otherBoid == null)
         {
-            if (m_boidManagerRef.m_goals.Find(r => r.obj == collision.gameObject && r.name == "flag" && r.team == team).obj == m_destinationObj)
+            GameObject flagholderRef = m_boidManagerRef.m_goals.Find(r => r.obj == collision.gameObject && r.name == "flag" && r.team == team).obj;
+            if (flagholderRef == collision.gameObject)
             {
               
                 if (m_hasFlag)
                 {
-                    Vector2 pos = m_destinationObj.transform.position;
+                    Vector2 pos = flagholderRef.transform.position;
                     m_flagRef.GetComponent<flag>().m_boidFollow = null;
                     m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
                     m_hasFlag = false;
