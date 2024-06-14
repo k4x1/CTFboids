@@ -21,7 +21,6 @@ public class boidManager : MonoBehaviour
 
 
 
-    private bool initCompleted = false;
     private void Start()
     {
         foreach (GameObject go in m_boids)
@@ -43,9 +42,15 @@ public class boidManager : MonoBehaviour
         }
         foreach (GameObject boid in m_boids)
         {
-            boid.GetComponent<boids>().RegisterBoidAsGoal();
+            boids boidRef = boid.GetComponent<boids>();
+            boidRef.RegisterBoidAsGoal();
+            boidRef.m_wanderFollow = new GameObject("wanderFollow");
+            WanderFollowMovement wanderRef = boidRef.m_wanderFollow.AddComponent<WanderFollowMovement>();
+            wanderRef.creator = boidRef.gameObject;
+            wanderRef.team = boidRef.team;
+           
+            //yeah i couldve made a prefab but the sunk cost falacy stoped me
 
-          
         }
         foreach (GameObject boid in m_boids)
         {

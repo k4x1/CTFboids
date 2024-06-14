@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Runtime.CompilerServices;
 public class boids : MonoBehaviour
 {
     [SerializeField] float m_avoidanceStr = 2;
@@ -30,6 +31,7 @@ public class boids : MonoBehaviour
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
     private boidManager m_boidManagerRef;
+    public GameObject m_wanderFollow;
 
     [SerializeField] private Vector3 m_avoidance;
     [SerializeField] private Vector3 m_destination;
@@ -38,7 +40,9 @@ public class boids : MonoBehaviour
     void Start()
     {
         InitializeComponents();
-   
+       
+      
+
     }
 
     private void LateUpdate()
@@ -216,7 +220,7 @@ public class boids : MonoBehaviour
     }
     public void initGoals()
     {
-
+        
         foreach (var goal in m_boidManagerRef.m_goals)
         {
             if (goal.team != team)
@@ -224,7 +228,12 @@ public class boids : MonoBehaviour
                 personalGoals.Add(goal);
             }
         }
-       
+        Goal wanderGoal = new Goal();
+        wanderGoal.weight = 10.0f;
+        wanderGoal.team = team;
+        wanderGoal.obj = m_wanderFollow;
+        wanderGoal.name = "wander";
+        personalGoals.Add(wanderGoal);
     }
     public void UpdateGoalWeight(Goal _goal , int _weight)
     {
@@ -240,6 +249,14 @@ public class boids : MonoBehaviour
       
         foreach (Goal _goal in personalGoals)
         {
+            if (_goal.name == "flag")
+            {
+                flagHolder flagRef = _goal.obj.GetComponent<flagHolder>();
+                if (flagRef.m_flagsTaken >= flagRef.m_maxFlags)
+                {
+                    goalsToUpdate.Add((_goal, 0));
+                }
+            }
             if (_goal.name == "boid")
             {
                 boids boidRef = _goal.obj.GetComponent<boids>();
@@ -271,7 +288,7 @@ public class boids : MonoBehaviour
 
                     if (boidRef.m_jailed)
                     {
-                        newWeight += 100;
+                        newWeight += 110;
 
                     }
                 }
@@ -290,6 +307,7 @@ public class boids : MonoBehaviour
         {
             m_destinationObj = randomGoal.Value.obj;
         }
+    
         
     }
 
@@ -313,8 +331,8 @@ public class boids : MonoBehaviour
             }
             float distance = Vector3.Distance(currentPosition, goal.obj.transform.position);
 
-        
-            float adjustedWeight = goal.weight - (distance * 0.1f);
+
+            float adjustedWeight = goal.weight- (distance * 0.1f);
             if (goal.weight != 0 && adjustedWeight == 0)
             {
                 adjustedWeight = 0.01f;
@@ -370,7 +388,6 @@ public class boids : MonoBehaviour
             }
             else if (m_boidManagerRef.m_goals.Find(r => r.name == "jail" && r.team != team).obj == collision.gameObject && !m_jailed)
             {
-                Debug.Log("jail touched");
                 foreach (GameObject boids in m_boidManagerRef.m_boids)
                 {
                     boids boidRef = boids.GetComponent<boids>();
@@ -399,7 +416,9 @@ public class boids : MonoBehaviour
                     otherBoid.m_flagRef.GetComponent<flag>().m_boidFollow = null;
                     otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
                     otherBoid.m_hasFlag = false;
-                    m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj.GetComponent<flagHolder>().m_flagsTaken++;
+                    m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj.GetComponent<flagHolder>().m_flagsTaken--;
+                    
+
                     otherBoid.m_destinationObj = null;
                 }
             }
@@ -407,7 +426,6 @@ public class boids : MonoBehaviour
         if (collision.gameObject == m_destinationObj)
         {
             Goal currentGoal = personalGoals.Find(r => r.obj == m_destinationObj);
-            UpdateGoalWeight(currentGoal, 0);
             m_destinationObj = null;
 
             return;
