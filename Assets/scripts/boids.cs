@@ -4,6 +4,8 @@ using UnityEngine;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine.Playables;
+using System.Runtime.Serialization;
+using System;
 public class boids : MonoBehaviour
 {
     [SerializeField] float m_avoidanceStr = 2;
@@ -15,31 +17,35 @@ public class boids : MonoBehaviour
 
     public Vector2 m_direction;
     public int m_detectionRes = 8;
-    public RaycastHit2D[][] m_hitArray;
+    [NonSerialized] public RaycastHit2D[][] m_hitArray;
     public float m_avoidanceRange = 1;
     public float m_speed = 10;
 
-    public bool m_canMove = true;
-    public bool m_jailed = false;
+    
+    [NonSerialized] public bool m_jailed = false;
     private bool m_hasBeenJailed = false;
-    public bool m_taggable = false;
-    public bool m_hasFlag = false;
 
-    public float m_goalChangeCooldown = 5f;
-    private float m_goalChangeTimer = 0f;
-    public float m_changeThreshold = 1.0f;
+    [NonSerialized] public bool m_taggable = false;
+    [NonSerialized] public bool m_hasFlag = false;
 
-    public GameObject m_flagRef = null;
+
+
+
+    [NonSerialized] public GameObject m_flagRef = null;
     public byte team = 0;
     public GameObject m_destinationObj;
 
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
     private boidManager m_boidManagerRef;
-    public GameObject m_wanderFollow;
+
+
+    [NonSerialized] public GameObject m_wanderFollow;
 
     [SerializeField] private Vector3 m_avoidance;
     [SerializeField] private Vector3 m_destination;
+
+    public bool m_canGoToEnemySide = true;
 
     public List<Goal> personalGoals = new List<Goal>();
     void Start()
@@ -80,6 +86,16 @@ public class boids : MonoBehaviour
             m_hasBeenJailed = true;
             MoveToJail();
         }
+        if (!m_canGoToEnemySide)
+        {
+            if(team == 1) { 
+                transform.position = new Vector2(Mathf.Clamp(transform.position.x, -40,-2), transform.position.y);
+            }
+            else
+            {
+                transform.position = new Vector2(Mathf.Clamp(transform.position.x, 2, 40), transform.position.y);
+            }
+        }
     }
 
 
@@ -111,18 +127,13 @@ public class boids : MonoBehaviour
         RotateBoid();
     }
 
-    private void HandleGoalChange()
-    {
-        m_goalChangeTimer = m_goalChangeCooldown;
-        
-    }
-
+ 
     private void MoveToJail()
     {
         int index = m_boidManagerRef.m_goals.FindIndex(goal => goal.team == (team ^ 1) && goal.name == "jail");
         GameObject jailRef = m_boidManagerRef.m_goals[index].obj;
         Vector2 pos = jailRef.transform.position;
-        transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+        transform.position = new Vector3(pos.x + UnityEngine.Random.Range(-3.0f, 3.0f), pos.y + UnityEngine.Random.Range(-3.0f, 3.0f));
         m_hasFlag = false;
 
      
@@ -273,7 +284,7 @@ public class boids : MonoBehaviour
             if (_goal.name == "flag")
             {
                 flagHolder flagRef = _goal.obj.GetComponent<flagHolder>();
-                if (flagRef.m_flagsTaken >= flagRef.m_maxFlags)
+                if (flagRef.m_flagsTaken >= flagRef.m_maxFlags || !m_canGoToEnemySide)
                 {
                     goalsToUpdate.Add((_goal, 0));
                 }
@@ -298,22 +309,27 @@ public class boids : MonoBehaviour
             if (_goal.name == "jail")
             {
                 int newWeight = 0;
-                foreach (GameObject obj in m_boidManagerRef.m_boids)
+                if (m_canGoToEnemySide)
                 {
-                    
-                    boids boidRef = obj.GetComponent<boids>();
-                    if (boidRef.team != team)
+                 
+                    foreach (GameObject obj in m_boidManagerRef.m_boids)
                     {
-                        continue;
-                    }
 
-                    if (boidRef.m_jailed)
-                    {
-                        newWeight += 110;
+                        boids boidRef = obj.GetComponent<boids>();
+                        if (boidRef.team != team)
+                        {
+                            continue;
+                        }
 
+                        if (boidRef.m_jailed)
+                        {
+                            newWeight += 110;
+
+                        }
                     }
+                    goalsToUpdate.Add((_goal, newWeight));
                 }
-                goalsToUpdate.Add((_goal, newWeight));
+               
             }
         }
 
@@ -375,7 +391,7 @@ public class boids : MonoBehaviour
        }
        
 
-        int randomIndex = Random.Range(0, highestGoals.Count);
+        int randomIndex = UnityEngine.Random.Range(0, highestGoals.Count);
 
      
         Goal currentGoal = personalGoals.Find(r => r.obj == _currentGoal);
@@ -407,7 +423,7 @@ public class boids : MonoBehaviour
                 {
                     Vector2 pos = flagholderRef.transform.position;
                     m_flagRef.GetComponent<flag>().m_boidFollow = null;
-                    m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+                    m_flagRef.transform.position = new Vector3(pos.x + UnityEngine.Random.Range(-3.0f, 3.0f), pos.y + UnityEngine.Random.Range(-3.0f, 3.0f));
                     m_hasFlag = false;
                     m_destinationObj = null;
                 }
@@ -445,7 +461,7 @@ public class boids : MonoBehaviour
                     GameObject flahHolderRef = m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag").obj;
                     flahHolderRef.GetComponent<flagHolder>().m_flagsTaken--;
                     Vector2 pos = flahHolderRef.transform.position;
-                    otherBoid.m_flagRef.transform.position = new Vector3(pos.x + Random.Range(-3.0f, 3.0f), pos.y + Random.Range(-3.0f, 3.0f));
+                    otherBoid.m_flagRef.transform.position = new Vector3(pos.x + UnityEngine.Random.Range(-3.0f, 3.0f), pos.y + UnityEngine.Random.Range(-3.0f, 3.0f));
 
 
                     otherBoid.m_destinationObj = null;

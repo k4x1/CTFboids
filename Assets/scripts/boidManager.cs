@@ -12,13 +12,14 @@ public struct Goal
 
 public class boidManager : MonoBehaviour
 {
-    public List<GameObject> m_redTeam;
-    public List<GameObject> m_bluTeam;
+  
     public List<GameObject> m_taggable;
     public List<GameObject> m_boids;
+    public List<GameObject> m_redTeam;
+    public List<GameObject> m_bluTeam;
     public List<Goal> m_goals;
     public float m_boidSpeed = 100;
-
+    public bool m_win = false;
 
 
     private void Start()
@@ -61,8 +62,35 @@ public class boidManager : MonoBehaviour
 
     private void Update()
     {
-       
+        for (int i = 0; i < m_redTeam.Count; i++)
+        {
+            if (m_redTeam[i].GetComponent<boids>().m_jailed)
+            {
 
+            }
+        }
+        for (int i = 0; i < m_bluTeam.Count; i++)
+        {
+            if (m_bluTeam[i].GetComponent<boids>().m_jailed)
+            {
+
+            }
+        }
+        if (m_win)
+        {
+            foreach (GameObject boid in m_boids)
+            {
+                Destroy(boid.GetComponent<boids>().m_wanderFollow);
+                Destroy(boid);
+                
+               
+            }
+            foreach (Goal goal in m_goals)
+            {
+                Destroy(goal.obj);
+            }
+            Destroy(gameObject);
+        }
     }
 
         

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using static UnityEditor.PlayerSettings;
 
 
@@ -10,6 +11,7 @@ public class flagHolder : MonoBehaviour
     public int m_maxFlags = 4;
     public GameObject m_flagObj;
     public boidManager m_boidManager;
+    public Image m_winScreen;
     //public GameObject[] m_flags = new GameObject[m_maxFlags];
     public int m_flagsTaken = 0;
     public Dictionary<int, GameObject> m_flags = new Dictionary<int, GameObject>();
@@ -45,6 +47,13 @@ public class flagHolder : MonoBehaviour
     }
     private void Update()
     {
-        
+        if(m_flagsTaken >= m_maxFlags)
+        {
+            m_winScreen.enabled = true;
+            m_winScreen.GetComponent<Image>().color = m_team == 1? Color.blue : Color.red;
+            m_boidManager.m_win = true;
+            
+
+        }
     }
 }
