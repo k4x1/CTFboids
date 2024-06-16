@@ -56,8 +56,10 @@ public class WanderFollowMovement : MonoBehaviour
         }
 
         // Apply clamping
-        x = (team == 0) ? Mathf.Clamp(x, 0, 40) : Mathf.Clamp(x, -40, 0);
-        y = Mathf.Clamp(y, -20, 20);
+        if (!creator.GetComponent<boids>().m_canGoToEnemySide) { 
+          //  x = (team == 0) ? Mathf.Clamp(x, 0, 40) : Mathf.Clamp(x, -40, 0);
+           // y = Mathf.Clamp(y, -20, 20);
+        }
         if ((clampedX || clampedY)&&!creator.GetComponent<boids>().m_taggable)
         {
             angle += 180;

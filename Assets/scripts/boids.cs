@@ -23,10 +23,11 @@ public class boids : MonoBehaviour
 
     
     [NonSerialized] public bool m_jailed = false;
-    private bool m_hasBeenJailed = false;
+    [NonSerialized]  private bool m_hasBeenJailed = false;
 
-    [NonSerialized] public bool m_taggable = false;
+   public bool m_taggable = false;
     [NonSerialized] public bool m_hasFlag = false;
+     public bool m_leftJail = false;
 
 
 
@@ -47,19 +48,22 @@ public class boids : MonoBehaviour
 
     public bool m_canGoToEnemySide = true;
 
+    [NonSerialized] public bool m_playableSet = false;
     public List<Goal> personalGoals = new List<Goal>();
     void Start()
     {
         InitializeComponents();
 
-        if (m_playable)
-        {
-            Instantiate(m_playerHighlight, transform);
-           // m_destinationObj = m_boidManagerRef.gameObject;
-        }
+      
     }
     private void LateUpdate()
     {
+        if (m_playable&& !m_playableSet)
+        {
+            Instantiate(m_playerHighlight, transform);
+            m_playableSet = true;
+
+        }
         if (!m_jailed) { 
             if (!m_playable) { 
            
@@ -76,7 +80,8 @@ public class boids : MonoBehaviour
                 m_destination = Vector3.Normalize(m_boidManagerRef.transform.position - transform.position);
 
 
-                m_rb.velocity = (new Vector3(1, 1, 0)) + Vector3.Normalize((m_destination * m_destinationStr)) * m_speed * 5;
+                m_rb.velocity = (new Vector3(1, 1, 0)) + Vector3.Normalize((m_destination * m_destinationStr)) * m_speed*1.2f;
+                //This games too hard so I'm buffing the player
 
             }
         }
@@ -89,11 +94,11 @@ public class boids : MonoBehaviour
         if (!m_canGoToEnemySide)
         {
             if(team == 1) { 
-                transform.position = new Vector2(Mathf.Clamp(transform.position.x, -40,-2), transform.position.y);
+                transform.position = new Vector2(Mathf.Clamp(transform.position.x, -40,-3), transform.position.y);
             }
             else
             {
-                transform.position = new Vector2(Mathf.Clamp(transform.position.x, 2, 40), transform.position.y);
+                transform.position = new Vector2(Mathf.Clamp(transform.position.x, 3, 40), transform.position.y);
             }
         }
     }
@@ -135,8 +140,9 @@ public class boids : MonoBehaviour
         Vector2 pos = jailRef.transform.position;
         transform.position = new Vector3(pos.x + UnityEngine.Random.Range(-3.0f, 3.0f), pos.y + UnityEngine.Random.Range(-3.0f, 3.0f));
         m_hasFlag = false;
+        
 
-     
+
         int boidIndex = m_boidManagerRef.m_goals.FindIndex(goal => goal.obj == gameObject);
         Goal updatedGoal = m_boidManagerRef.m_goals[boidIndex];
         updatedGoal.weight = 0;
@@ -176,7 +182,7 @@ public class boids : MonoBehaviour
                     continue;
                 }
              
-                if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid") )
+                if (collider == m_collider || collider.gameObject == m_destinationObj || collider.gameObject.CompareTag("noAvoid")  ||collider.gameObject.CompareTag("boidManager")  )
                 {
                     continue;
                 }
@@ -288,6 +294,10 @@ public class boids : MonoBehaviour
                 {
                     goalsToUpdate.Add((_goal, 0));
                 }
+                else if(m_canGoToEnemySide)
+                {
+                    goalsToUpdate.Add((_goal, 200));
+                }
             }
             if (_goal.name == "boid")
             {
@@ -323,7 +333,7 @@ public class boids : MonoBehaviour
 
                         if (boidRef.m_jailed)
                         {
-                            newWeight += 110;
+                            newWeight += 110 ;
 
                         }
                     }
@@ -356,10 +366,26 @@ public class boids : MonoBehaviour
    
     public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
     {
+        if (!m_canGoToEnemySide)
+        {
+            return personalGoals.Find(r => r.name == "wander"); 
+        }
         float highestWeight = 0f;
         if (m_hasFlag)
         {
             return m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "flag");
+        }
+        if (m_leftJail)
+        {
+           
+            if (Mathf.Sign(team - 1) == Mathf.Sign(transform.position.x))
+            {
+                return m_boidManagerRef.m_goals.Find(r => r.team == team && r.name == "jail");
+            }
+            else {
+                m_leftJail = false;
+            }
+
         }
         List<Goal> highestGoals = new List<Goal>();
         Vector3 currentPosition = transform.position;
@@ -426,18 +452,22 @@ public class boids : MonoBehaviour
                     m_flagRef.transform.position = new Vector3(pos.x + UnityEngine.Random.Range(-3.0f, 3.0f), pos.y + UnityEngine.Random.Range(-3.0f, 3.0f));
                     m_hasFlag = false;
                     m_destinationObj = null;
+                    flagholderRef.GetComponent<flagHolder>().m_flagsWon++;;
                 }
             }
-            else if (m_boidManagerRef.m_goals.Find(r => r.name == "jail" && r.team != team).obj == collision.gameObject && !m_jailed)
+            else if (m_boidManagerRef.m_goals.Find(r => r.name == "jail" && r.team != team).obj == collision.gameObject && !m_jailed && !m_hasFlag)
             {
                 foreach (GameObject boids in m_boidManagerRef.m_boids)
                 {
                     boids boidRef = boids.GetComponent<boids>();
                     if(boidRef.team == team )
                     {
-                        if (boidRef.m_jailed)
+                        if (boidRef.m_jailed && !boidRef.m_leftJail && !m_leftJail)
                         {
                             boidRef.m_jailed = false;
+                            boidRef.m_leftJail = true;
+                            m_leftJail = true;
+                            continue;
                         }
                     }
                 }

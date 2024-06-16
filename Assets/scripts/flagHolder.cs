@@ -10,6 +10,7 @@ public class flagHolder : MonoBehaviour
     public byte m_team = 0;
     public int m_maxFlags = 4;
     public GameObject m_flagObj;
+    public int m_flagsWon= 0;
     public boidManager m_boidManager;
     public Image m_winScreen;
     //public GameObject[] m_flags = new GameObject[m_maxFlags];
@@ -40,14 +41,14 @@ public class flagHolder : MonoBehaviour
                 otherBoid.m_hasFlag = true;
                 otherBoid.m_flagRef = m_flags[m_flagsTaken];
                 m_flags[m_flagsTaken].GetComponent<flag>().m_boidFollow = otherBoid.transform;
-                //      otherBoid.m_destinationObj = m_boidManager.m_goals.Find(goal => goal.team == (m_team^ 1) && goal.name == "flag").obj; 
                 m_flagsTaken++;
             }
         }
+     
     }
     private void Update()
     {
-        if(m_flagsTaken >= m_maxFlags)
+        if(m_flagsWon >= m_maxFlags)
         {
             m_winScreen.enabled = true;
             m_winScreen.GetComponent<Image>().color = m_team == 1? Color.blue : Color.red;

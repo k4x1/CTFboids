@@ -6,6 +6,7 @@ TagManager:
   tags:
   - boidManager
   - noAvoid
+  - visual
   layers:
   - Default
   - TransparentFX

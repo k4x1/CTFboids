@@ -22,6 +22,8 @@ public class boidManager : MonoBehaviour
     public bool m_win = false;
 
 
+
+
     private void Start()
     {
         foreach (GameObject go in m_boids)
@@ -62,20 +64,72 @@ public class boidManager : MonoBehaviour
 
     private void Update()
     {
+        int rInOtherSide = 0;
+       
+        
         for (int i = 0; i < m_redTeam.Count; i++)
         {
-            if (m_redTeam[i].GetComponent<boids>().m_jailed)
-            {
 
+            boids boidRef = m_redTeam[i].GetComponent<boids>();
+            boidRef.m_canGoToEnemySide = true;
+            if (rInOtherSide == 1)
+            {
+                boidRef.m_canGoToEnemySide = false;
+            }
+            else if (rInOtherSide == 2)
+            {
+                boidRef.m_canGoToEnemySide = true;
+            }
+            else { 
+                
+
+                if (boidRef.m_taggable && !boidRef.m_jailed)
+                {
+                    i = 0;
+                    rInOtherSide  = 1;
+                }
+                else if( i == m_redTeam.Count)
+                {
+                    i = 0;
+                    rInOtherSide = 2;
+                }
+            
             }
         }
+        int bInOtherSide = 0;
+
+
         for (int i = 0; i < m_bluTeam.Count; i++)
         {
-            if (m_bluTeam[i].GetComponent<boids>().m_jailed)
+
+            boids boidRef = m_bluTeam[i].GetComponent<boids>();
+            boidRef.m_canGoToEnemySide = true;
+            if (bInOtherSide == 1)
             {
+                boidRef.m_canGoToEnemySide = false;
+            }
+            else if (bInOtherSide == 2)
+            {
+                boidRef.m_canGoToEnemySide = true;
+            }
+            else
+            {
+
+
+                if (boidRef.m_taggable && !boidRef.m_jailed)
+                {
+                    i = 0;
+                    bInOtherSide = 1;
+                }
+                else if (i == m_bluTeam.Count)
+                {
+                    i = 0;
+                    bInOtherSide = 2;
+                }
 
             }
         }
+
         if (m_win)
         {
             foreach (GameObject boid in m_boids)
@@ -93,6 +147,27 @@ public class boidManager : MonoBehaviour
         }
     }
 
-        
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        boids otherBoid = collision.GetComponent<boids>();
+        if (otherBoid != null)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                foreach (GameObject boid in m_boids)
+                {
+                    boids boidRef = boid.GetComponent<boids>();
+                    boidRef.m_playable = false;
+                    boidRef.m_playableSet = false;
+                }
+             
+                foreach(GameObject playableBorder in GameObject.FindGameObjectsWithTag("visual"))
+                {
+                    Destroy(playableBorder);
+                }
+                otherBoid.m_playable = !otherBoid.m_playable;
+            }
+        }
+    } 
 
 }
