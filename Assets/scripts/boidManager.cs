@@ -20,8 +20,8 @@ public class boidManager : MonoBehaviour
     public List<Goal> m_goals;
     public float m_boidSpeed = 100;
     public bool m_win = false;
-
-
+    private int team0DefenderCount = 0;
+    private int team1DefenderCount = 0;
 
 
     private void Start()
@@ -52,83 +52,37 @@ public class boidManager : MonoBehaviour
             wanderRef.creator = boidRef.gameObject;
             wanderRef.team = boidRef.team;
            
-            //yeah i couldve made a prefab but the sunk cost falacy stoped me
+            // Yeah I couldve made a prefab but the sunk cost falacy stoped me
 
         }
         foreach (GameObject boid in m_boids)
         {
-            boid.GetComponent<boids>().initGoals();
+            boids boidRef = boid.GetComponent<boids>();
+            boidRef.initGoals();
+            if (boidRef.team == 0)
+            {
+                if (team0DefenderCount < 3)
+                {
+                    boidRef.isDefender = true;
+                    boidRef.m_canGoToEnemySide = false;
+                    team0DefenderCount++;
+                }
+            }
+            else if (boidRef.team == 1)
+            {
+                if (team1DefenderCount < 3)
+                {
+                    boidRef.isDefender = true;
+                    boidRef.m_canGoToEnemySide = false;
+                    team1DefenderCount++;
+                }
+            }
         }
 
     }
 
     private void Update()
     {
-        int rInOtherSide = 0;
-       
-        
-        for (int i = 0; i < m_redTeam.Count; i++)
-        {
-
-            boids boidRef = m_redTeam[i].GetComponent<boids>();
-            boidRef.m_canGoToEnemySide = true;
-            if (rInOtherSide == 1)
-            {
-                boidRef.m_canGoToEnemySide = false;
-            }
-            else if (rInOtherSide == 2)
-            {
-                boidRef.m_canGoToEnemySide = true;
-            }
-            else { 
-                
-
-                if (boidRef.m_taggable && !boidRef.m_jailed)
-                {
-                    i = 0;
-                    rInOtherSide  = 1;
-                }
-                else if( i == m_redTeam.Count)
-                {
-                    i = 0;
-                    rInOtherSide = 2;
-                }
-            
-            }
-        }
-        int bInOtherSide = 0;
-
-
-        for (int i = 0; i < m_bluTeam.Count; i++)
-        {
-
-            boids boidRef = m_bluTeam[i].GetComponent<boids>();
-            boidRef.m_canGoToEnemySide = true;
-            if (bInOtherSide == 1)
-            {
-                boidRef.m_canGoToEnemySide = false;
-            }
-            else if (bInOtherSide == 2)
-            {
-                boidRef.m_canGoToEnemySide = true;
-            }
-            else
-            {
-
-
-                if (boidRef.m_taggable && !boidRef.m_jailed)
-                {
-                    i = 0;
-                    bInOtherSide = 1;
-                }
-                else if (i == m_bluTeam.Count)
-                {
-                    i = 0;
-                    bInOtherSide = 2;
-                }
-
-            }
-        }
 
         if (m_win)
         {
@@ -168,6 +122,8 @@ public class boidManager : MonoBehaviour
                 otherBoid.m_playable = !otherBoid.m_playable;
             }
         }
-    } 
+    }
+
+
 
 }

@@ -21,16 +21,12 @@ public class boids : MonoBehaviour
     public float m_avoidanceRange = 1;
     public float m_speed = 10;
 
-    
     [NonSerialized] public bool m_jailed = false;
-    [NonSerialized]  private bool m_hasBeenJailed = false;
+    [NonSerialized] private bool m_hasBeenJailed = false;
 
-   public bool m_taggable = false;
+    public bool m_taggable = false;
     [NonSerialized] public bool m_hasFlag = false;
-     public bool m_leftJail = false;
-
-
-
+    public bool m_leftJail = false;
 
     [NonSerialized] public GameObject m_flagRef = null;
     public byte team = 0;
@@ -39,7 +35,6 @@ public class boids : MonoBehaviour
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
     private boidManager m_boidManagerRef;
-
 
     [NonSerialized] public GameObject m_wanderFollow;
 
@@ -50,11 +45,17 @@ public class boids : MonoBehaviour
 
     [NonSerialized] public bool m_playableSet = false;
     public List<Goal> personalGoals = new List<Goal>();
+
+
+   
+
+    public bool isDefender = false;
     void Start()
     {
+       
         InitializeComponents();
 
-      
+       
     }
     private void LateUpdate()
     {
@@ -91,16 +92,7 @@ public class boids : MonoBehaviour
             m_hasBeenJailed = true;
             MoveToJail();
         }
-        if (!m_canGoToEnemySide)
-        {
-            if(team == 1) { 
-                transform.position = new Vector2(Mathf.Clamp(transform.position.x, -40,-3), transform.position.y);
-            }
-            else
-            {
-                transform.position = new Vector2(Mathf.Clamp(transform.position.x, 3, 40), transform.position.y);
-            }
-        }
+
     }
 
 
@@ -110,6 +102,7 @@ public class boids : MonoBehaviour
         m_boidManagerRef = GameObject.FindWithTag("boidManager").GetComponent<boidManager>();
         m_collider = GetComponent<BoxCollider2D>();
         m_rb = GetComponent<Rigidbody2D>();
+
     }
 
     public void RegisterBoidAsGoal()
@@ -479,6 +472,7 @@ public class boids : MonoBehaviour
             if (otherBoid.m_taggable && otherBoid.team != team)
             {
                 otherBoid.m_jailed = true;
+               
                 otherBoid.m_taggable = false;
 
                 m_destinationObj = null;

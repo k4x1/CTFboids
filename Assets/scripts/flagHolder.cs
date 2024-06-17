@@ -13,7 +13,6 @@ public class flagHolder : MonoBehaviour
     public int m_flagsWon= 0;
     public boidManager m_boidManager;
     public Image m_winScreen;
-    //public GameObject[] m_flags = new GameObject[m_maxFlags];
     public int m_flagsTaken = 0;
     public Dictionary<int, GameObject> m_flags = new Dictionary<int, GameObject>();
     private void Start()
