@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Linq;
 [System.Serializable]
 public struct Goal
 {
@@ -59,31 +59,42 @@ public class boidManager : MonoBehaviour
         {
             boids boidRef = boid.GetComponent<boids>();
             boidRef.initGoals();
-            if (boidRef.team == 0)
-            {
-                if (team0DefenderCount < 3)
-                {
-                    boidRef.isDefender = true;
-                    boidRef.m_canGoToEnemySide = false;
-                    team0DefenderCount++;
-                }
-            }
-            else if (boidRef.team == 1)
-            {
-                if (team1DefenderCount < 3)
-                {
-                    boidRef.isDefender = true;
-                    boidRef.m_canGoToEnemySide = false;
-                    team1DefenderCount++;
-                }
-            }
+            calculateDefenders(boidRef);
         }
 
     }
 
     private void Update()
     {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        transform.position = new Vector2(mousePos.x, mousePos .y);
+        if (Input.GetMouseButtonDown(0))
+        {
+            boids closestBoid = null;
+            foreach (GameObject boid in m_boids)
+            {
+                boids boidRef = boid.GetComponent<boids>();
+                boidRef.m_playable = false;
+                boidRef.m_playableSet = false;
+                if(closestBoid == null)
+                {
+                    closestBoid = boidRef;
+                }
+                else
+                {
+                    if(Vector2.Distance(mousePos, boid.transform.position) < Vector2.Distance(mousePos, closestBoid.transform.position))
+                    {
+                        closestBoid = boidRef;
+                    }
+                }
+            }
 
+            foreach (GameObject playableBorder in GameObject.FindGameObjectsWithTag("visual"))
+            {
+                Destroy(playableBorder);
+            }
+            closestBoid.m_playable = !closestBoid.m_playable;
+        }
         if (m_win)
         {
             foreach (GameObject boid in m_boids)
@@ -101,11 +112,109 @@ public class boidManager : MonoBehaviour
         }
     }
 
+
+    void calculateDefenders(boids boidRef)
+    {
+        if (boidRef.team == 0)
+        {
+            if (team0DefenderCount < 3)
+            {
+                boidRef.isDefender = true;
+                boidRef.m_canGoToEnemySide = false;
+                team0DefenderCount++;
+            }
+        }
+        else if (boidRef.team == 1)
+        {
+            if (team1DefenderCount < 3)
+            {
+                boidRef.isDefender = true;
+                boidRef.m_canGoToEnemySide = false;
+                team1DefenderCount++;
+            }
+        }
+    }
+
+    public void HandleJailing(boids boidRef)
+    {
+        if (!boidRef.isDefender)
+        {
+            if (boidRef.team == 0 && team0DefenderCount > 0)
+            {
+                ReassignDefender(0);
+            }
+            else if (boidRef.team == 1 && team1DefenderCount > 0)
+            {
+                ReassignDefender(1);
+            }
+        }
+        else
+        {
+
+            if (boidRef.team == 0 && team0DefenderCount == m_redTeam.Count - m_redTeam.Count(r => r.GetComponent<boids>().m_jailed))
+            {
+                ReassignDefender(0, true);
+            }
+            else if (boidRef.team == 1 && team1DefenderCount == m_bluTeam.Count - m_bluTeam.Count(r => r.GetComponent<boids>().m_jailed))
+            {
+                ReassignDefender(1, true);
+            }
+        }
+    }
+
+    private void ReassignDefender(byte team, bool forceReassign = false)
+    {
+        foreach (GameObject boid in m_boids)
+        {
+            boids boidRef = boid.GetComponent<boids>();
+            if (boidRef.team == team && boidRef.isDefender)
+            {
+                boidRef.isDefender = false;
+                boidRef.m_canGoToEnemySide = true;
+                if (team == 0)
+                {
+                    team0DefenderCount--;
+                }
+                else if (team == 1)
+                {
+                    team1DefenderCount--;
+                }
+                break;
+            }
+        }
+
+
+        if (forceReassign)
+        {
+            foreach (GameObject boid in m_boids)
+            {
+                boids boidRef = boid.GetComponent<boids>();
+                if (boidRef.team == team && !boidRef.isDefender)
+                {
+                    boidRef.isDefender = true;
+                    boidRef.m_canGoToEnemySide = false;
+                    if (team == 0)
+                    {
+                        team0DefenderCount++;
+                    }
+                    else if (team == 1)
+                    {
+                        team1DefenderCount++;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+
     private void OnTriggerStay2D(Collider2D collision)
     {
+        Debug.Log(collision);
         boids otherBoid = collision.GetComponent<boids>();
         if (otherBoid != null)
         {
+
             if (Input.GetMouseButtonDown(0))
             {
                 foreach (GameObject boid in m_boids)
@@ -114,8 +223,8 @@ public class boidManager : MonoBehaviour
                     boidRef.m_playable = false;
                     boidRef.m_playableSet = false;
                 }
-             
-                foreach(GameObject playableBorder in GameObject.FindGameObjectsWithTag("visual"))
+
+                foreach (GameObject playableBorder in GameObject.FindGameObjectsWithTag("visual"))
                 {
                     Destroy(playableBorder);
                 }
@@ -123,7 +232,4 @@ public class boidManager : MonoBehaviour
             }
         }
     }
-
-
-
 }

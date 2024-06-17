@@ -1,11 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using UnityEngine.Playables;
-using System.Runtime.Serialization;
 using System;
+
 public class boids : MonoBehaviour
 {
     [SerializeField] float m_avoidanceStr = 2;
@@ -34,7 +31,7 @@ public class boids : MonoBehaviour
 
     private Rigidbody2D m_rb;
     private BoxCollider2D m_collider;
-    private boidManager m_boidManagerRef;
+    public boidManager m_boidManagerRef;
 
     [NonSerialized] public GameObject m_wanderFollow;
 
@@ -46,13 +43,15 @@ public class boids : MonoBehaviour
     [NonSerialized] public bool m_playableSet = false;
     public List<Goal> personalGoals = new List<Goal>();
 
-
+    public Vector2 m_randomInitPosX;
+    public Vector2 m_randomInitPosY;
    
 
     public bool isDefender = false;
     void Start()
     {
-       
+        transform.position = new Vector2(UnityEngine.Random.Range(m_randomInitPosX.x, m_randomInitPosX.y),
+                                         UnityEngine.Random.Range(m_randomInitPosY.x, m_randomInitPosY.y));
         InitializeComponents();
 
        
@@ -92,14 +91,14 @@ public class boids : MonoBehaviour
             m_hasBeenJailed = true;
             MoveToJail();
         }
-
+        transform.position = new Vector3(Mathf.Clamp(transform.position.x, -40, 40), Mathf.Clamp(transform.position.y, -20, 20));
     }
 
 
 
     private void InitializeComponents()
     {
-        m_boidManagerRef = GameObject.FindWithTag("boidManager").GetComponent<boidManager>();
+        //m_boidManagerRef = GameObject.FindWithTag("boidManager").GetComponent<boidManager>();
         m_collider = GetComponent<BoxCollider2D>();
         m_rb = GetComponent<Rigidbody2D>();
 
@@ -359,10 +358,7 @@ public class boids : MonoBehaviour
    
     public Goal? GetRandomGoal(byte _team, GameObject _currentGoal)
     {
-        if (!m_canGoToEnemySide)
-        {
-            return personalGoals.Find(r => r.name == "wander"); 
-        }
+       
         float highestWeight = 0f;
         if (m_hasFlag)
         {
@@ -471,6 +467,7 @@ public class boids : MonoBehaviour
         {
             if (otherBoid.m_taggable && otherBoid.team != team)
             {
+                m_boidManagerRef.HandleJailing(otherBoid);
                 otherBoid.m_jailed = true;
                
                 otherBoid.m_taggable = false;
